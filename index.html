@@ -972,8 +972,8 @@ $("mute").onclick=()=>{ $("mute").textContent=$("mute").textContent===""?"":""; 
   const btn=document.getElementById("bivanMuteBtn");
   if(!btn || !window.bivanSetSfxMuted) return;
   btn.addEventListener("click", function(){
-    const txt=(btn.textContent||"").toUpperCase();
-    window.bivanSetSfxMuted(txt.includes("UNMUTE"));
+    const music=document.getElementById("bivanMusic");
+    window.bivanSetSfxMuted(!!(music && music.muted));
   });
 })();
 
