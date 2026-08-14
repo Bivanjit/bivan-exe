@@ -913,13 +913,6 @@ $("mute").onclick=()=>{ $("mute").textContent=$("mute").textContent===""?"":""; 
       return result;
     };
   }
-
-  const mute=document.getElementById("bivanMuteBtn");
-  if(mute){
-    mute.addEventListener("click",function(){
-      music.muted=!music.muted;
-    });
-  }
 })();
 
 
@@ -967,15 +960,7 @@ $("mute").onclick=()=>{ $("mute").textContent=$("mute").textContent===""?"":""; 
 })();
 
 
-/* BIVAN_SFX_SETTINGS_SYNC */
-(function(){
-  const btn=document.getElementById("bivanMuteBtn");
-  if(!btn || !window.bivanSetSfxMuted) return;
-  btn.addEventListener("click", function(){
-    const music=document.getElementById("bivanMusic");
-    window.bivanSetSfxMuted(!!(music && music.muted));
-  });
-})();
+
 
 </script>
 </body>
