@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090909">
+<title>BIVAN.EXE — Troll Game</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#111;color:#fff}
+body{font-family:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;overflow-x:hidden}
+button,input{font:inherit}button{cursor:pointer}
+#app{min-height:100vh;background:repeating-linear-gradient(0deg,#111 0,#111 3px,#151515 3px,#151515 6px)}
+.noise{position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.08;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:5px 5px}
+.top{height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;background:#000;border-bottom:5px solid #fff;position:sticky;top:0;z-index:30}
+.logo{font-size:27px;text-shadow:3px 3px #ff1744}.logo span{color:#d7ff00}
+.top-right{display:flex;gap:8px;align-items:center}.pill{border:3px solid #000;background:#d7ff00;color:#000;padding:6px 9px;box-shadow:4px 4px #ff1744;font-size:11px}.icon-btn{background:#fff;color:#000;border:3px solid #000;padding:6px 10px}
+.screen{display:none;max-width:1120px;margin:auto;padding:24px 14px 70px}.screen.active{display:block;animation:screenIn .25s steps(2,end)}
+@keyframes screenIn{0%{opacity:0;transform:translate(12px,-8px) rotate(1deg)}60%{opacity:1;transform:translate(-4px,3px) rotate(-.5deg)}100%{transform:none}}
+.rage{background:#f4edcf;color:#080808;border:5px solid #000;box-shadow:10px 10px #000;position:relative;overflow:hidden}
+.rage:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.15;background:repeating-linear-gradient(115deg,transparent 0 14px,#000 15px 17px)}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:center;padding:28px;min-height:640px}
+.huge{font-size:clamp(58px,10vw,125px);line-height:.75;letter-spacing:-4px;margin:14px 0;color:#000;text-shadow:5px 5px #fff,10px 10px #000}
+.huge .green{color:#d7ff00}.huge .pink{color:#ff1744}
+.strip{display:inline-block;background:#ff1744;color:#fff;border:4px solid #000;box-shadow:6px 6px #000;padding:8px 12px;transform:rotate(-2deg);font-size:17px}
+.meme{font-family:Arial,sans-serif;font-weight:1000;text-transform:uppercase;font-size:19px;line-height:1.4;color:#111}
+.start-card{padding:20px;margin-top:20px;background:#fff;border:5px solid #000;box-shadow:7px 7px #ff1744;position:relative;z-index:1}
+.start-card h2{margin:0 0 10px;font-size:31px}
+label{font-family:Arial,sans-serif;font-weight:900;font-size:12px;color:#111}
+input{width:100%;padding:14px;border:4px solid #000;background:#fff;color:#000;font-family:Arial,sans-serif;font-weight:900;outline:none}
+.gender-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.gender-btn{position:relative;z-index:5;border:4px solid #000;box-shadow:5px 5px #000;padding:15px;background:#46d9ff;color:#000;font-size:25px;min-height:62px;transition:.1s}
+.gender-btn.female{background:#ff55c8}.gender-btn.selected{transform:translate(3px,3px);box-shadow:2px 2px #000;outline:5px solid #d7ff00}
+.gender-btn:hover{transform:rotate(-2deg) translate(-2px,-2px)}
+.btn{border:4px solid #000;box-shadow:6px 6px #000;background:#d7ff00;color:#000;padding:13px 17px;min-height:48px;transition:.1s}
+.btn:hover{transform:translate(-3px,-3px) rotate(-1deg);box-shadow:9px 9px #000}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px #000}
+.lime{background:#d7ff00}.pink{background:#ff55c8}.cyan{background:#46d9ff}.yellow{background:#ffd400}.red{background:#ff1744;color:#fff}
+.button-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+.meme-face{font-size:100px;text-align:center;filter:drop-shadow(7px 7px #000);animation:headbang .8s infinite steps(2,end)}
+@keyframes headbang{0%{transform:rotate(-6deg)}50%{transform:rotate(7deg) scale(1.06)}100%{transform:rotate(-6deg)}}
+.fake-window{background:#46d9ff;border:5px solid #000;box-shadow:8px 8px #000;padding:14px;transform:rotate(2deg)}
+.fake-window .bar{height:24px;background:#000;color:#fff;padding:2px 7px;font:900 12px Arial}
+.warning{background:#ffd400;color:#000;border:4px solid #000;padding:12px;margin-top:15px;font-size:20px;transform:rotate(-2deg);box-shadow:5px 5px #ff1744}
+.game-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.level-label{font-size:18px;color:#d7ff00;text-shadow:2px 2px #000}
+.progress{height:18px;border:4px solid #fff;background:#000;margin-bottom:14px}.progress i{display:block;height:100%;background:repeating-linear-gradient(45deg,#d7ff00 0 12px,#ff1744 12px 24px);width:0;transition:.2s}
+.game-grid{display:grid;grid-template-columns:1.5fr .5fr;gap:15px}
+.challenge-card{padding:24px;min-height:500px;background:#fff;color:#000}
+.challenge-title{font-size:clamp(40px,7vw,75px);line-height:.8;color:#000;text-shadow:4px 4px #fff,7px 7px #000;margin:8px 0 16px;animation:titleJolt .35s steps(2,end)}
+@keyframes titleJolt{0%{transform:translateX(-8px) rotate(-2deg)}50%{transform:translateX(8px) rotate(2deg)}100%{transform:none}}
+.prompt{font-family:Arial,sans-serif;font-size:20px;font-weight:1000;color:#000;background:#ffd400;border:4px solid #000;padding:10px;box-shadow:5px 5px #ff1744;line-height:1.45;min-height:55px}
+.question-box{background:#fff;color:#000;border:4px solid #000;box-shadow:6px 6px #ff1744;padding:17px;margin:14px 0}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:11px}.option{font-family:Arial,sans-serif;font-weight:1000;font-size:18px;text-align:left;border:4px solid #000;box-shadow:5px 5px #000;padding:14px;background:#fff;color:#000;transition:.08s}
+.option:nth-child(2){background:#ffd400}.option:nth-child(3){background:#46d9ff}.option:nth-child(4){background:#ff55c8}.option:hover{transform:translate(-3px,-3px) rotate(1deg);box-shadow:8px 8px #000}
+.option:disabled{cursor:not-allowed}.feedback{font-size:28px;line-height:1.0;background:#ff1744;color:#fff;min-height:82px;margin-top:13px;padding:14px;border:4px solid #000;background:#ff1744;color:#fff;text-shadow:2px 2px #000;box-shadow:6px 6px #000;transform:rotate(-1deg)}
+.feedback{position:relative;border-radius:18px 18px 18px 4px;transform:rotate(-1deg)}.feedback:after{content:"";position:absolute;left:18px;bottom:-16px;border-width:16px 16px 0 0;border-style:solid;border-color:#000 transparent transparent transparent}.next-visible{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:100%!important;
+  margin-top:16px!important;
+  min-height:64px!important;
+  background:#d7ff00!important;
+  color:#000!important;
+  border:6px solid #000!important;
+  box-shadow:8px 8px #ff1744!important;
+  font-size:28px!important;
+}
+.pop-good{animation:good .45s cubic-bezier(.2,1.5,.4,1)}.pop-bad{animation:bad .4s ease}
+@keyframes good{0%{opacity:0;transform:scale(.5) rotate(-8deg)}60%{transform:scale(1.15) rotate(3deg)}100%{opacity:1;transform:scale(1) rotate(-1deg)}}
+@keyframes bad{0%{opacity:0;transform:translateX(-20px)}25%{transform:translateX(20px) rotate(2deg)}50%{transform:translateX(-12px)}75%{transform:translateX(7px)}100%{opacity:1;transform:rotate(-1deg)}}
+.glitch{animation:glitch .5s steps(2,end) infinite}.shake{animation:shake .35s infinite}
+@keyframes glitch{0%,100%{transform:none}30%{transform:skewX(4deg) translateX(2px)}60%{transform:skewX(-5deg) translateX(-2px)}}
+@keyframes shake{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) translateX(4px)}}
+.side{display:flex;flex-direction:column;gap:12px}.side-box{background:#000;color:#fff;border:4px solid #fff;box-shadow:5px 5px #ff55c8;padding:14px}.side-box h3{margin:0 0 8px;color:#d7ff00;font-size:25px}.side-box p{font-family:Arial,sans-serif;font-size:13px;font-weight:900;color:#ddd}
+.troll-face{text-align:center;font-size:58px}
+.result{padding:25px}.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.big-stat{background:#ff55c8;color:#000;border:5px solid #000;box-shadow:7px 7px #000;padding:17px;text-align:center}.big-stat:nth-child(2){background:#46d9ff}.big-stat small{font:900 12px Arial}.big-stat b{font-size:68px}.roast{background:#fff;color:#000;border:5px solid #000;box-shadow:7px 7px #ff1744;padding:18px;font-size:27px;margin:18px 0;transform:rotate(-1deg)}
+.board{margin:18px auto;max-width:850px}.row{display:grid;grid-template-columns:50px 1fr 120px;gap:8px;align-items:center;background:#111;color:#fff;border-bottom:3px solid #fff;padding:12px}.row:nth-child(even){background:#272727}.row.dev{background:#3b005c}.name{font:900 16px Arial}.score-num{text-align:right;color:#d7ff00}.small{font:11px Arial;color:#777}.dev-photo{width:100%;border:5px solid #000;box-shadow:8px 8px #ff1744}.dev-panel{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center;padding:20px}
+.share-card{padding:20px;border:5px solid #000;box-shadow:7px 7px #000;margin:14px 0;color:#fff}.share-card.boys{background:#347cff}.share-card.girls{background:#ff55c8}.share-card h3{font-size:32px;margin:0 0 7px}.share-card p{font:900 17px Arial}
+.footer{text-align:center;font:11px Arial;color:#777;padding:20px}
+.hide{display:none!important}.final-cta{animation:cta .7s infinite steps(2,end)}@keyframes cta{0%,100%{transform:rotate(-1deg) scale(1)}50%{transform:rotate(1deg) scale(1.05)}}
+@media(max-width:760px){.hero,.game-grid,.dev-panel{grid-template-columns:1fr}.hero{min-height:auto;padding:20px}.side{display:grid;grid-template-columns:1fr 1fr}.result-grid{grid-template-columns:1fr}.gender-grid,.options{grid-template-columns:1fr}.challenge-card{min-height:auto}}
+@media(max-width:480px){.side{grid-template-columns:1fr}.screen{padding:15px 9px 50px}.huge{font-size:62px}.challenge-card{padding:16px}.top{height:60px}.pill{display:none}}
+
+#next[hidden]{display:none!important}
+#next:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important}
+.answer-status{font-family:Arial,sans-serif;font-weight:1000;font-size:18px;padding:10px 12px;margin-top:12px;border:4px solid #000;background:#fff;color:#000;box-shadow:5px 5px #000}
+
+/* FINAL BUBBLY / CHAOTIC UI */
+.rage,.start-card,.fake-window,.challenge-card,.side-box,.question-box,.feedback,.roast,
+.big-stat,.share-card,.dev-panel,.row,.warning,.strip,.pill,.level-card{border-radius:30px!important}
+.hero{border-radius:44px!important}
+.fake-window{border-radius:40px 40px 24px 40px!important}
+.challenge-card{border-radius:44px 26px 44px 26px!important}
+.feedback{border-radius:38px 38px 38px 10px!important}
+.option,.btn,.gender-btn,input{border-radius:999px!important}
+.row{border-radius:999px!important;margin:7px 0}
+.warning,.strip,.pill{border-radius:999px!important}
+.challenge-title{border-radius:36px;padding:12px 18px;display:inline-block;background:#fff;max-width:100%}
+.options{gap:15px}.option{min-height:62px;padding:15px 22px}
+.option:hover{transform:translate(-3px,-3px) rotate(-1deg) scale(1.02)}
+
+/* FINAL REFERENCE-INSPIRED MOTION + BUBBLE SYSTEM */
+:root{--ease-out:cubic-bezier(.16,1,.3,1);--ease-pop:cubic-bezier(.2,1.35,.35,1)}
+.hero,.challenge-card,.result,.start-card{will-change:transform}
+.screen.active{animation:screenSmash .42s var(--ease-out) both}
+@keyframes screenSmash{
+  0%{opacity:0;transform:scale(.965) translateY(12px)}
+  70%{opacity:1;transform:scale(1.008) translateY(-2px)}
+  100%{opacity:1;transform:none}
+}
+.option{will-change:transform;transition:transform .16s var(--ease-pop),box-shadow .16s var(--ease-pop),filter .16s}
+.option:hover{filter:saturate(1.25) contrast(1.05)}
+.option:active{transform:scale(.96)!important}
+.challenge-title{animation:titleSlam .42s var(--ease-pop) both}
+@keyframes titleSlam{0%{opacity:0;transform:scale(.65) rotate(-4deg)}65%{opacity:1;transform:scale(1.05) rotate(1deg)}100%{transform:none}}
+.pop-good{animation:goodBurst .5s var(--ease-pop) both}
+@keyframes goodBurst{0%{opacity:0;transform:scale(.65) rotate(-6deg)}55%{opacity:1;transform:scale(1.12) rotate(2deg)}100%{transform:scale(1) rotate(-1deg)}}
+.pop-bad{animation:badShake .48s ease-out both}
+@keyframes badShake{0%{opacity:0;transform:translateX(-18px) rotate(-2deg)}25%{transform:translateX(18px) rotate(2deg)}45%{transform:translateX(-11px)}65%{transform:translateX(7px)}100%{opacity:1;transform:rotate(-1deg)}}
+.pill-choice{min-height:90px;font-size:30px!important;letter-spacing:1px}
+.blue-pill{background:#46d9ff!important}
+.red-pill{background:#ff1744!important;color:#fff!important}
+.pill-win{animation:pillWin .65s var(--ease-pop) both}
+@keyframes pillWin{0%{transform:scale(1)}40%{transform:scale(1.12) rotate(-2deg)}70%{transform:scale(.98) rotate(1deg)}100%{transform:scale(1)}}
+.pill-loss{animation:pillLoss .55s ease both}
+@keyframes pillLoss{0%,100%{transform:translateX(0)}20%{transform:translateX(-12px) rotate(-2deg)}40%{transform:translateX(12px) rotate(2deg)}60%{transform:translateX(-8px)}80%{transform:translateX(6px)}}
+.chaos-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.78);opacity:0;backdrop-filter:blur(3px);transition:opacity .2s ease}
+.chaos-modal.modal-show{opacity:1}
+.modal-card{width:min(680px,96vw);padding:28px;transform:translateY(25px) scale(.92) rotate(-1deg);transition:transform .45s var(--ease-pop);box-shadow:14px 14px #ff1744!important}
+.modal-show .modal-card{transform:translateY(0) scale(1) rotate(-1deg)}
+.modal-kicker{font-size:18px;background:#000;color:#d7ff00;display:inline-block;padding:7px 12px;border-radius:999px;border:3px solid #000;transform:rotate(-2deg)}
+.modal-title{font-size:clamp(42px,8vw,78px);line-height:.82;color:#ff1744;text-shadow:4px 4px #000;margin:16px 0}
+.modal-copy{font:900 17px Arial,sans-serif;color:#000;line-height:1.45}
+.modal-share-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.share-pop{border:5px solid #000;border-radius:34px;padding:18px;text-align:left;box-shadow:7px 7px #000;cursor:pointer;transition:transform .18s var(--ease-pop),box-shadow .18s}
+.share-pop:hover{transform:translate(-4px,-5px) rotate(-1deg);box-shadow:11px 11px #000}
+.share-pop:active{transform:translate(2px,2px);box-shadow:3px 3px #000}
+.share-pop span{display:block;font-size:31px;color:#000}
+.share-pop small{display:block;font:900 14px Arial;color:#000;margin:6px 0 12px}
+.share-pop b{display:inline-block;background:#000;color:#fff;border-radius:999px;padding:8px 12px;font:900 12px Arial}
+.boys-pop{background:#46d9ff}.girls-pop{background:#ff55c8}
+.modal-close{margin-top:12px}
+.copy-pop{animation:copyPop .42s var(--ease-pop) both}
+@keyframes copyPop{0%{transform:scale(.9)}55%{transform:scale(1.06)}100%{transform:scale(1)}}
+.pill-hint{font-size:22px!important;text-align:center;letter-spacing:.4px}
+.pill-sub{text-align:center;margin:12px 0}
+.final-cta{animation:finalCta 1.15s var(--ease-pop) infinite}
+@keyframes finalCta{0%,100%{transform:scale(1) rotate(-1deg)}50%{transform:scale(1.035) rotate(1deg)}}
+@media(max-width:700px){.modal-share-grid{grid-template-columns:1fr}.modal-card{padding:20px}.pill-choice{font-size:24px!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* FINAL FEEDBACK LEGIBILITY */
+#feedback{
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
+  font-weight:900;
+  font-size:clamp(17px,2.1vw,25px);
+  line-height:1.28;
+  letter-spacing:.1px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  text-align:center;
+  min-height:92px;
+  height:auto;
+  padding:20px 24px;
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+
+/* BIVAN_SETTINGS_PATCH */
+#bivanSettingsBtn{
+  position:fixed;
+  top:14px;
+  right:14px;
+  z-index:9999;
+  border:4px solid #000;
+  border-radius:999px;
+  background:#d7ff00;
+  color:#000;
+  box-shadow:5px 5px #ff1744;
+  padding:10px 16px;
+  font:900 15px Arial,Helvetica,sans-serif;
+  cursor:pointer;
+  transform:rotate(2deg);
+}
+#bivanSettingsBtn:hover{transform:rotate(-2deg) scale(1.05)}
+#bivanSettingsOverlay{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(5px);
+  padding:20px;
+}
+#bivanSettingsPanel{
+  width:min(430px,94vw);
+  background:#fff;
+  color:#000;
+  border:6px solid #000;
+  border-radius:38px;
+  box-shadow:12px 12px #ff1744;
+  padding:26px;
+  transform:rotate(-1deg);
+}
+#bivanSettingsPanel h2{
+  margin:0 0 16px;
+  font:900 32px Arial,Helvetica,sans-serif;
+}
+.bivan-setting-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin:12px 0;
+  padding:14px 16px;
+  border:4px solid #000;
+  border-radius:999px;
+  background:#d7ff00;
+  font:900 17px Arial,Helvetica,sans-serif;
+}
+.bivan-setting-action{
+  border:4px solid #000;
+  border-radius:999px;
+  background:#111;
+  color:#fff;
+  padding:9px 15px;
+  font:900 14px Arial,Helvetica,sans-serif;
+  cursor:pointer;
+}
+.bivan-setting-close{
+  width:100%;
+  margin-top:14px;
+  border:5px solid #000;
+  border-radius:999px;
+  background:#ff1744;
+  color:#fff;
+  padding:12px;
+  font:900 18px Arial,Helvetica,sans-serif;
+  cursor:pointer;
+}
+#bivanWatermark{
+  position:fixed;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%) rotate(-2deg);
+  z-index:9998;
+  pointer-events:none;
+  user-select:none;
+  opacity:.72;
+  color:#fff;
+  background:rgba(0,0,0,.62);
+  border:2px solid rgba(255,255,255,.7);
+  border-radius:999px;
+  padding:5px 12px;
+  font:900 12px Arial,Helvetica,sans-serif;
+  letter-spacing:.4px;
+  text-shadow:2px 2px #000;
+}
+
+</style>
+</head>
+<body>
+
+<!-- BIVAN_SETTINGS_PATCH -->
+<button id="bivanSettingsBtn" type="button" aria-label="Open settings">SETTINGS</button>
+
+<div id="bivanSettingsOverlay" role="dialog" aria-modal="true" aria-label="Game settings">
+  <div id="bivanSettingsPanel">
+    <h2>GAME SETTINGS</h2>
+
+    <div class="bivan-setting-row">
+      <span id="bivanVolumeLabel">SOUND: ON</span>
+      <button class="bivan-setting-action" id="bivanMuteBtn" type="button">MUTE</button>
+    </div>
+
+    <div class="bivan-setting-row">
+      <span>DEVELOPER</span>
+      <span>@bivan____7x</span>
+    </div>
+
+    <button class="bivan-setting-close" id="bivanSettingsClose" type="button">CLOSE</button>
+  </div>
+</div>
+
+<div id="bivanWatermark">@bivan____7x</div>
+
+<div id="app">
+<div class="noise"></div>
+<header class="top">
+  <div class="logo">BIVAN<span>.EXE</span></div>
+  <div class="top-right"><div class="pill">⚠️ TRUST NOTHING</div><button class="icon-btn" id="mute" title="Sound later"></button></div>
+</header>
+
+<section id="home" class="screen active">
+  <div class="hero rage">
+    <div>
+      <span class="strip"> WARNING: THIS WEBSITE HAS ISSUES</span>
+      <h1 class="huge">SCORE<br><span class="green">1K+</span><br><span class="pink">OR CRY.</span></h1>
+      <div class="meme">Score 1000+ to prove you ain't gay. </div>
+      <div class="warning">IF YOU THINK THIS IS EASY, YOU ARE ALREADY WRONG.</div>
+      <div class="start-card">
+        <h2>WHO ARE YOU? </h2>
+        <label for="username">USERNAME</label>
+        <input id="username" maxlength="20" placeholder="type your name...">
+        <h2 style="font-size:24px;margin-top:16px">GENDER — PICK ONE</h2>
+        <div class="gender-grid">
+          <button type="button" class="gender-btn" id="maleBtn" onclick="selectGender('male')"> MALE</button>
+          <button type="button" class="gender-btn female" id="femaleBtn" onclick="selectGender('female')"> FEMALE</button>
+        </div>
+        <div id="genderHint" style="font:900 13px Arial;margin-top:10px">NO SELECTION = NO GAME.</div>
+        <div class="button-row">
+          <button class="btn lime glitch" onclick="start()">▶ ENTER THE CHAOS</button>
+          <button class="btn yellow" onclick="show('leaderboard');renderBoard()"> LEADERBOARD</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="meme-face"></div>
+      <div class="fake-window">
+        <div class="bar">BIVAN.EXE.exe — NOT RESPONDING</div>
+        <div style="font-size:34px;color:#000;padding:18px 4px">WHY ARE YOU STILL PLAYING?</div>
+        <div class="meme">THE LEVEL IS LYING. THE BUTTON IS LYING. I AM LYING.</div>
+      </div>
+      <div class="level-select" style="margin-top:18px">
+        <div class="level-card" style="background:#d7ff00;color:#000;border:4px solid #000;box-shadow:5px 5px #000;padding:15px"><h3>1 — EASY</h3><p>Famous last words.</p></div>
+        <div class="level-card" style="background:#ffd400;color:#000;border:4px solid #000;box-shadow:5px 5px #000;padding:15px"><h3>2 — SUS</h3><p>Trust issues begin.</p></div>
+        <div class="level-card" style="background:#ff55c8;color:#000;border:4px solid #000;box-shadow:5px 5px #000;padding:15px"><h3>3 — 67?</h3><p>Brain.exe has stopped.</p></div>
+        <div class="level-card" style="background:#46d9ff;color:#000;border:4px solid #000;box-shadow:5px 5px #000;padding:15px"><h3>4 — CHAOS</h3><p>Press nothing. Probably.</p></div>
+        <div class="level-card" style="background:#ff1744;color:#fff;border:4px solid #000;box-shadow:5px 5px #000;padding:15px"><h3>5 — DEVELOPER </h3><p>He controls the ending.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="game-head"><div class="level-label" id="levelLabel"></div><div id="counter" style="font-family:Arial;font-weight:900"></div></div>
+  <div class="progress"><i id="progress"></i></div>
+  <div class="game-grid">
+    <div class="challenge-card grunge">
+      <div id="challenge"></div>
+      <div id="feedback" class="feedback">The game is watching. ️</div>
+      <button id="next" class="btn lime next-visible" hidden onclick="next()">NEXT LEVEL -&gt;</button>
+    </div>
+    <aside class="side">
+      <div class="side-box"><h3>PLAYER</h3><div id="playerName" style="font-size:25px;color:var(--cyan)"></div><p>Score: <b id="scoreNow">0</b></p></div>
+      <div class="side-box"><h3>TROLL METER</h3><div id="trollFace" class="troll-face"></div><p id="trollCount">Insults loaded: random</p></div>
+      <div class="side-box"><h3>RULE #1</h3><p>There are no rules. Whoever told you otherwise was probably the developer.</p></div>
+      <div class="side-box"><h3>⚠️ WARNING</h3><p id="warning">If the opponent can predict your next move, DON'T MOVE.</p></div>
+    </aside>
+  </div>
+</section>
+
+<section id="developer" class="screen">
+  <div class="dev-panel">
+    <div><span class="sticker"> FINAL BOSS</span><h1 class="huge" style="font-size:clamp(55px,8vw,90px)">THE<br><span class="pink">DEVELOPER.</span></h1><p class="meme-line">He knows you lost.</p><p>You've reached the final level. BIVAN.EXE has entered the game. Resistance is unnecessary.</p><button class="btn red" onclick="continueDeveloper()">SYSTEM OVERRIDE -></button></div>
+    <div><img class="dev-photo" src="assets/bivan-dev.jpg" alt="Developer"></div>
+  </div>
+</section>
+
+<section id="result" class="screen">
+  <div class="grunge" style="padding:24px">
+    <span class="sticker" style="background:var(--red);color:#fff">GAME OVER </span>
+    <h1 class="huge" style="font-size:clamp(55px,9vw,100px)">YOU<br><span class="pink">SURVIVED.</span></h1>
+    <div class="result-grid">
+      <div class="big-stat"><small>SCORE</small><b id="finalScore">0</b></div>
+      <div class="big-stat"><small>RANK</small><b id="finalRank">#?</b></div>
+    </div>
+    <div class="roast" id="roast"></div>
+    <div class="button-row"><button class="btn pink" onclick="show('leaderboard');renderBoard()"> VIEW LEADERBOARD</button><button id="challengeFriendFinal" class="btn lime final-cta" onclick="openChallengePopup()">CHALLENGE A FRIEND </button><button class="btn yellow" onclick="location.reload()">↻ PLAY AGAIN</button></div>
+  </div>
+</section>
+
+<section id="leaderboard" class="screen">
+  <div class="grunge" style="padding:20px">
+    <span class="sticker"> PUBLIC LEADERBOARD</span><h1 class="huge" style="font-size:clamp(52px,8vw,85px)">WHO'S<br><span class="green">WORSE?</span></h1>
+    <p class="meme-line">The developer is permanently #1. This is not a bug.</p>
+    <div class="board" id="board"></div>
+    <div class="button-row"><button class="btn lime" onclick="show('home')">← BACK</button><button class="btn pink" onclick="show('share')">CHALLENGE A FRIEND</button></div>
+  </div>
+</section>
+
+<section id="share" class="screen">
+  <div class="grunge" style="padding:20px">
+    <span class="sticker"> SEND THEM HERE</span><h1 class="huge" style="font-size:clamp(50px,8vw,85px)">CHALLENGE<br><span class="pink">A FRIEND.</span></h1>
+    <div class="share-card boys"><h3> BOYS </h3><p>Challenge a friend if you are truly a man. </p><button class="btn cyan" onclick="copyChallenge('boy')">COPY LINK</button></div>
+    <div class="share-card girls"><h3> GIRLS ️</h3><p>Challenge a friend if you don't wanna marry that lil bro who didn't challenge. </p><button class="btn yellow" onclick="copyChallenge('girl')">COPY LINK</button></div>
+    <div id="copyMsg" class="meme-line"></div>
+    <button class="btn" onclick="show('leaderboard');renderBoard()">← LEADERBOARD</button>
+  </div>
+</section>
+<div class="footer">MADE WITH 0% SERIOUSNESS · 100% ATTITUDE · BIVAN.EXE</div>
+</div>
+
+<script>
+
+const maleCompliments = [
+ "Bhai kya game khela ", "Handsome + smart? System overload.", "Bhai aaj toh aura max hai.",
+ "King behaviour detected ", "Bhai tu toh expected se zyada nikla.", "Solid performance, hero.",
+ "Bhai tera confidence finally kaam aa gaya.", "Aaj tu certified legend hai.",
+ "Kya scene hai bhai, brain bhi online hai.", "Bhai 1K ke paas aa gaya — respect."
+];
+const femaleCompliments = [
+ "Pretty + deadly combo detected ", "Girlboss mode activated ", "Aaj toh full main-character energy.",
+ "Brains + style = dangerous combo.", "Pretty smart, not gonna lie.", "Queen behaviour detected.",
+ "Aaj game ne tumse panga le liya.", "Confidence level: illegal.", "Girl, you cooked.",
+ "Certified slay detected. "
+];
+const maleInsults = ["Isiliye woh uske saath chali gayi. Tumse zyada plot samajh aa gaya usko.", "Isi liye tere dost group chat mein tujhe mute karke rakhte hain.", "Bhai tu answer nahi de raha, character development postpone kar raha hai.", "Be so fr. Itna confidence kis server se aaya?", "Bro got left on delivered by basic logic.", "Negative aura. Itna negative ki Wi-Fi bhi disconnect ho gaya.", "Bhai tu cooked nahi hai. Tu toh recipe ka footnote hai.", "The kitchen is closed. Please stop cooking.", "Bro ne question ko dekha aur bola: side quest.", "Ye answer nahi tha. Ye ek public crashout tha.", "Bhai tera comeback arc abhi buffering pe hai.", "Skill issue nahi bhai, ye toh premium skill issue hai.", "Bro really thought the button was gonna save him.", "Tere last do brain cells bhi ek dusre ko blame kar rahe hain.", "Aura -100. Receipt sambhal ke rakhna.", "Bhai tu L collect kar raha hai jaise loyalty points ho.", "The confidence is crazy. The answer is crazier.", "Bro got folded by four buttons and a font.", "Ye toh itna bad tha ki question ne khud leave le liya.", "Bhai lock in. Ye koi side quest nahi hai.", "You had one job and somehow made it a trilogy.", "Bro is farming Ls for the leaderboard.", "That was a generational fumble.", "Bhai tera decision-making abhi maintenance pe hai.", "No cap, ye answer dekh ke server ne sigh kiya.", "Bro got ratioed by JavaScript. Let that sink in.", "Tera aura abhi terms and conditions padh raha hai.", "Bhai itna confidently galat hona bhi talent hai.", "The game gave you a free point and you filed a complaint instead.", "Bro is not beating the flop-era allegations.", "Touch grass, then touch the correct button.", "Bhai tera brain airplane mode pe hai.", "This is crazy work. HR ko bulao.", "Bro really said 'trust me bro' and sold the entire operation.", "Tere answer ka logic abhi missing-person report mein hai.", "Bhai tu question solve nahi karta, question ko trauma deta hai.", "Main character energy, background-character decisions.", "Bro is one click away from a documentary.", "That was not a misclick. That was a lifestyle choice.", "Bhai game tumhe roast nahi kar raha. Evidence khud aa raha hai.", "Your aura just filed for bankruptcy.", "Bro is speedrunning embarrassment with world-record pace.", "Question: simple. You: unnecessary cinematic universe.", "Bhai tere liye 'easy' ek personal attack hai.", "The comeback has been postponed indefinitely.", "Bro got outplayed by the UI. That's actually impressive.", "Bhai tu answer de raha hai ya random number generator chala raha hai?", "This performance belongs in the blooper reel.", "Bhai ab bas 'we ball' bolke mat bachna.", "You didn't cook. You burned the kitchen and blamed the stove.", "Bro has entered the consequences arc.", "Bhai tera brain update 99% pe stuck hai.", "That choice had absolutely no business being that confident.", "Bro is fighting for his life against a website.", "Tera answer dekh ke developer ne bhi laptop se distance bana liya.", "Bhai ye L nahi, full HD L hai.", "The question was free. You somehow bought the premium mistake.", "Bro is collecting red flags from a multiple-choice question.", "Aaj logic ne tujhe seen pe chhod diya.", "Bhai tu literally apne hi plot twist ka victim hai.", "The algorithm has officially lost faith in you.", "Bro really turned a warm-up into a boss fight.", "Tere choices ka koi fan club nahi hai.", "Bhai tera confidence aur tera accuracy long-distance relationship mein hain.", "That was so unserious even the loading screen looked disappointed."];
+const femaleInsults = ["Isiliye woh uske saath chali gayi. Tumse zyada plot samajh aa gaya usko.", "Isi liye tere dost group chat mein tujhe mute karke rakhte hain.", "Bhai tu answer nahi de raha, character development postpone kar raha hai.", "Be so fr. Itna confidence kis server se aaya?", "Bro got left on delivered by basic logic.", "Negative aura. Itna negative ki Wi-Fi bhi disconnect ho gaya.", "Bhai tu cooked nahi hai. Tu toh recipe ka footnote hai.", "The kitchen is closed. Please stop cooking.", "Bro ne question ko dekha aur bola: side quest.", "Ye answer nahi tha. Ye ek public crashout tha.", "Bhai tera comeback arc abhi buffering pe hai.", "Skill issue nahi bhai, ye toh premium skill issue hai.", "Bro really thought the button was gonna save him.", "Tere last do brain cells bhi ek dusre ko blame kar rahe hain.", "Aura -100. Receipt sambhal ke rakhna.", "Bhai tu L collect kar raha hai jaise loyalty points ho.", "The confidence is crazy. The answer is crazier.", "Bro got folded by four buttons and a font.", "Ye toh itna bad tha ki question ne khud leave le liya.", "Bhai lock in. Ye koi side quest nahi hai.", "You had one job and somehow made it a trilogy.", "Bro is farming Ls for the leaderboard.", "That was a generational fumble.", "Bhai tera decision-making abhi maintenance pe hai.", "No cap, ye answer dekh ke server ne sigh kiya.", "Bro got ratioed by JavaScript. Let that sink in.", "Tera aura abhi terms and conditions padh raha hai.", "Bhai itna confidently galat hona bhi talent hai.", "The game gave you a free point and you filed a complaint instead.", "Bro is not beating the flop-era allegations.", "Touch grass, then touch the correct button.", "Bhai tera brain airplane mode pe hai.", "This is crazy work. HR ko bulao.", "Bro really said 'trust me bro' and sold the entire operation.", "Tere answer ka logic abhi missing-person report mein hai.", "Bhai tu question solve nahi karta, question ko trauma deta hai.", "Main character energy, background-character decisions.", "Bro is one click away from a documentary.", "That was not a misclick. That was a lifestyle choice.", "Bhai game tumhe roast nahi kar raha. Evidence khud aa raha hai.", "Your aura just filed for bankruptcy.", "Bro is speedrunning embarrassment with world-record pace.", "Question: simple. You: unnecessary cinematic universe.", "Bhai tere liye 'easy' ek personal attack hai.", "The comeback has been postponed indefinitely.", "Bro got outplayed by the UI. That's actually impressive.", "Bhai tu answer de raha hai ya random number generator chala raha hai?", "This performance belongs in the blooper reel.", "Bhai ab bas 'we ball' bolke mat bachna.", "You didn't cook. You burned the kitchen and blamed the stove.", "Bro has entered the consequences arc.", "Bhai tera brain update 99% pe stuck hai.", "That choice had absolutely no business being that confident.", "Bro is fighting for his life against a website.", "Tera answer dekh ke developer ne bhi laptop se distance bana liya.", "Bhai ye L nahi, full HD L hai.", "The question was free. You somehow bought the premium mistake.", "Bro is collecting red flags from a multiple-choice question.", "Aaj logic ne tujhe seen pe chhod diya.", "Bhai tu literally apne hi plot twist ka victim hai.", "The algorithm has officially lost faith in you.", "Bro really turned a warm-up into a boss fight.", "Tere choices ka koi fan club nahi hai.", "Bhai tera confidence aur tera accuracy long-distance relationship mein hain.", "That was so unserious even the loading screen looked disappointed."];
+const neutralInsults = ["Isiliye woh uske saath chali gayi. Tumse zyada plot samajh aa gaya usko.", "Isi liye tere dost group chat mein tujhe mute karke rakhte hain.", "Bhai tu answer nahi de raha, character development postpone kar raha hai.", "Be so fr. Itna confidence kis server se aaya?", "Bro got left on delivered by basic logic.", "Negative aura. Itna negative ki Wi-Fi bhi disconnect ho gaya.", "Bhai tu cooked nahi hai. Tu toh recipe ka footnote hai.", "The kitchen is closed. Please stop cooking.", "Bro ne question ko dekha aur bola: side quest.", "Ye answer nahi tha. Ye ek public crashout tha.", "Bhai tera comeback arc abhi buffering pe hai.", "Skill issue nahi bhai, ye toh premium skill issue hai.", "Bro really thought the button was gonna save him.", "Tere last do brain cells bhi ek dusre ko blame kar rahe hain.", "Aura -100. Receipt sambhal ke rakhna.", "Bhai tu L collect kar raha hai jaise loyalty points ho.", "The confidence is crazy. The answer is crazier.", "Bro got folded by four buttons and a font.", "Ye toh itna bad tha ki question ne khud leave le liya.", "Bhai lock in. Ye koi side quest nahi hai.", "You had one job and somehow made it a trilogy.", "Bro is farming Ls for the leaderboard.", "That was a generational fumble.", "Bhai tera decision-making abhi maintenance pe hai.", "No cap, ye answer dekh ke server ne sigh kiya.", "Bro got ratioed by JavaScript. Let that sink in.", "Tera aura abhi terms and conditions padh raha hai.", "Bhai itna confidently galat hona bhi talent hai.", "The game gave you a free point and you filed a complaint instead.", "Bro is not beating the flop-era allegations.", "Touch grass, then touch the correct button.", "Bhai tera brain airplane mode pe hai.", "This is crazy work. HR ko bulao.", "Bro really said 'trust me bro' and sold the entire operation.", "Tere answer ka logic abhi missing-person report mein hai.", "Bhai tu question solve nahi karta, question ko trauma deta hai.", "Main character energy, background-character decisions.", "Bro is one click away from a documentary.", "That was not a misclick. That was a lifestyle choice.", "Bhai game tumhe roast nahi kar raha. Evidence khud aa raha hai.", "Your aura just filed for bankruptcy.", "Bro is speedrunning embarrassment with world-record pace.", "Question: simple. You: unnecessary cinematic universe.", "Bhai tere liye 'easy' ek personal attack hai.", "The comeback has been postponed indefinitely.", "Bro got outplayed by the UI. That's actually impressive.", "Bhai tu answer de raha hai ya random number generator chala raha hai?", "This performance belongs in the blooper reel.", "Bhai ab bas 'we ball' bolke mat bachna.", "You didn't cook. You burned the kitchen and blamed the stove.", "Bro has entered the consequences arc.", "Bhai tera brain update 99% pe stuck hai.", "That choice had absolutely no business being that confident.", "Bro is fighting for his life against a website.", "Tera answer dekh ke developer ne bhi laptop se distance bana liya.", "Bhai ye L nahi, full HD L hai.", "The question was free. You somehow bought the premium mistake.", "Bro is collecting red flags from a multiple-choice question.", "Aaj logic ne tujhe seen pe chhod diya.", "Bhai tu literally apne hi plot twist ka victim hai.", "The algorithm has officially lost faith in you.", "Bro really turned a warm-up into a boss fight.", "Tere choices ka koi fan club nahi hai.", "Bhai tera confidence aur tera accuracy long-distance relationship mein hain.", "That was so unserious even the loading screen looked disappointed."];
+const roasts = maleInsults;
+const leaderboardComplimentsMale = ["perfectly straight-ish","handsome","full aura","king energy","certified legend"];
+const leaderboardComplimentsFemale = ["pretty","queen energy","full aura","certified slay","main-character"];
+
+const levels = [
+ {l:1,name:"EASY",color:"#b8ff00"},
+ {l:2,name:"GETTING SUSPICIOUS",color:"#ffd400"},
+ {l:3,name:"YOU TRUST THIS GAME?",color:"#ff1687"},
+ {l:4,name:"ABSOLUTELY NOT",color:"#347cff"},
+ {l:5,name:"THE DEVELOPER",color:"#ff2b2b"}
+];
+
+const insults = [
+ "That's why she left you. ",
+ "That's why you don't have friends. ",
+ "Your brain is on vacation.",
+ "Bro's last brain cell just clocked out.",
+ "Your ancestors felt that one.",
+ "WHO LET YOU COOK?",
+ "You had one job. ONE.",
+ "That answer needs parental supervision.",
+ "Bro is speedrunning embarrassment.",
+ "Your confidence is impressive. Your answer isn't.",
+ "The developer is reconsidering giving you another chance.",
+ "Your neurons just filed for unemployment.",
+ "You answered like the Wi-Fi disconnected halfway through.",
+ "Bro is playing against a question and still losing.",
+ "The answer was looking for you. You missed it.",
+ "Your brain opened the loading screen and never finished.",
+ "That was not an answer. That was a cry for help.",
+ "You didn't fail the question. You traumatized it.",
+ "The game is now personally offended.",
+ "Bro brought vibes to a logic fight.",
+ "Your IQ just requested annual leave.",
+ "You are proof that confidence and correctness are separate things.",
+ "That answer came directly from the forbidden part of your brain.",
+ "Even the tutorial is embarrassed.",
+ "Bro is negotiating with basic arithmetic.",
+ "Your brain said 'trust me bro' and betrayed you.",
+ "This is why calculators have batteries.",
+ "The question was easy. You made it lore.",
+ "Bro just unlocked a new difficulty: thinking.",
+ "Your neurons are currently buffering.",
+ "You don't need a hint. You need a patch update.",
+ "The game asked a question. You started a side quest.",
+ "That was so wrong it became historically significant.",
+ "Bro is fighting the laws of reality.",
+ "Your answer has been forwarded to the Department of Bad Decisions.",
+ "You are not cooked. You are the entire kitchen.",
+ "The answer left the chat before you could submit it.",
+ "Bro's strategy is 100% confidence, 0% evidence.",
+ "Your brain is running on demo mode.",
+ "This is less 'wrong answer' and more 'creative writing'.",
+ "The developer saw that and whispered 'nah'.",
+ "Your neurons are unionizing.",
+ "Bro just challenged the concept of being correct.",
+ "That answer was sponsored by pure audacity."
+];
+
+const correctJokes = ["Isiliye woh uske saath chali gayi. Tumse zyada plot samajh aa gaya usko.", "Isi liye tere dost group chat mein tujhe mute karke rakhte hain.", "Bhai tu answer nahi de raha, character development postpone kar raha hai.", "Be so fr. Itna confidence kis server se aaya?", "Bro got left on delivered by basic logic.", "Negative aura. Itna negative ki Wi-Fi bhi disconnect ho gaya.", "Bhai tu cooked nahi hai. Tu toh recipe ka footnote hai.", "The kitchen is closed. Please stop cooking.", "Bro ne question ko dekha aur bola: side quest.", "Ye answer nahi tha. Ye ek public crashout tha.", "Bhai tera comeback arc abhi buffering pe hai.", "Skill issue nahi bhai, ye toh premium skill issue hai.", "Bro really thought the button was gonna save him.", "Tere last do brain cells bhi ek dusre ko blame kar rahe hain.", "Aura -100. Receipt sambhal ke rakhna.", "Bhai tu L collect kar raha hai jaise loyalty points ho.", "The confidence is crazy. The answer is crazier.", "Bro got folded by four buttons and a font.", "Ye toh itna bad tha ki question ne khud leave le liya.", "Bhai lock in. Ye koi side quest nahi hai.", "You had one job and somehow made it a trilogy.", "Bro is farming Ls for the leaderboard.", "That was a generational fumble.", "Bhai tera decision-making abhi maintenance pe hai.", "No cap, ye answer dekh ke server ne sigh kiya.", "Bro got ratioed by JavaScript. Let that sink in.", "Tera aura abhi terms and conditions padh raha hai.", "Bhai itna confidently galat hona bhi talent hai.", "The game gave you a free point and you filed a complaint instead.", "Bro is not beating the flop-era allegations.", "Touch grass, then touch the correct button.", "Bhai tera brain airplane mode pe hai.", "This is crazy work. HR ko bulao.", "Bro really said 'trust me bro' and sold the entire operation.", "Tere answer ka logic abhi missing-person report mein hai.", "Bhai tu question solve nahi karta, question ko trauma deta hai.", "Main character energy, background-character decisions.", "Bro is one click away from a documentary.", "That was not a misclick. That was a lifestyle choice.", "Bhai game tumhe roast nahi kar raha. Evidence khud aa raha hai.", "Your aura just filed for bankruptcy.", "Bro is speedrunning embarrassment with world-record pace.", "Question: simple. You: unnecessary cinematic universe.", "Bhai tere liye 'easy' ek personal attack hai.", "The comeback has been postponed indefinitely.", "Bro got outplayed by the UI. That's actually impressive.", "Bhai tu answer de raha hai ya random number generator chala raha hai?", "This performance belongs in the blooper reel.", "Bhai ab bas 'we ball' bolke mat bachna.", "You didn't cook. You burned the kitchen and blamed the stove.", "Bro has entered the consequences arc.", "Bhai tera brain update 99% pe stuck hai.", "That choice had absolutely no business being that confident.", "Bro is fighting for his life against a website.", "Tera answer dekh ke developer ne bhi laptop se distance bana liya.", "Bhai ye L nahi, full HD L hai.", "The question was free. You somehow bought the premium mistake.", "Bro is collecting red flags from a multiple-choice question.", "Aaj logic ne tujhe seen pe chhod diya.", "Bhai tu literally apne hi plot twist ka victim hai.", "The algorithm has officially lost faith in you.", "Bro really turned a warm-up into a boss fight.", "Tere choices ka koi fan club nahi hai.", "Bhai tera confidence aur tera accuracy long-distance relationship mein hain.", "That was so unserious even the loading screen looked disappointed."];
+
+const challenges = [
+ {type:"math",q:"What is 2 + 2?",a:["4","22","6.7","potato"],correct:2,level:1},
+ {type:"math",q:"What is 5 + 5?",a:["10","55","67","banana"],correct:2,level:1},
+ {type:"math",q:"What is 10 - 3?",a:["7","13","67","wifi"],correct:0,level:1},
+ {type:"choice",q:"Which button is definitely safe?",a:["SAFE","VERY SAFE","100% SAFE","DO NOT TRUST ANY"],correct:3,level:1},
+ {type:"choice",q:"Pick the smartest option.",a:["A","B","C","The developer is smarter"],correct:3,level:1},
+ {type:"trap",q:"DO NOT PRESS THE RED BUTTON.",a:[" PRESS IT","DON'T PRESS","PRESS IT AGAIN","I CAN'T READ"],correct:1,level:2},
+ {type:"math",q:"What is 67 + 67?",a:["134","67","734","6.7"],correct:2,level:2},
+ {type:"choice",q:"Which answer looks suspiciously correct?",a:["Definitely 4","Obviously 67","Probably 6.7","Ask Bivan"],correct:2,level:2},
+ {type:"sequence",q:"Complete: 2, 4, 6, 8, ?",a:["10","9","67","pineapple"],correct:3,level:2},
+ {type:"choice",q:"What should you do when a website says DON'T CLICK?",a:["Leave","Click","Screenshot","Cry"],correct:1,level:3},
+ {type:"math",q:"How many letters are in the word 'WRONG'?",a:["5","6.7","67","depends"],correct:3,level:3},
+ {type:"choice",q:"Select the correct answer.",a:["This one","No this one","Maybe this one","None. Nice try."],correct:3,level:3},
+ {type:"reaction",q:"Click the button when it turns GREEN.",a:[],correct:0,level:3},
+ {type:"choice",q:"A 2 kg object moves at 6 m/s. What is its kinetic energy?",a:["6 J","12 J","36 J","72 J"],correct:2,level:3},
+ {type:"trap",q:"The button is not going to move. Promise.",a:["CLICK","CLICK NOW","CLICK HERE","I TRUST YOU"],correct:3,level:4},
+ {type:"math",q:"What is 1 + 1?",a:["2","11","6.7","67"],correct:2,level:4},
+ {type:"choice",q:"Which statement is true?",a:["This game is fair","The developer is fair","There are rules","None of these"],correct:3,level:4},
+ {type:"sequence",q:"What comes after 66?",a:["67","68","BIVAN","all of the above"],correct:0,level:4},
+ {type:"choice",q:"Choose your final weapon.",a:["Logic","Luck","Confidence","None will save you"],correct:3,level:4},
+ {type:"pill",q:"BLUE PILL / RED PILL",a:[" BLUE PILL"," RED PILL"],level:4}
+];
+
+const INSTAGRAM_URL="https://www.instagram.com/bivan____7x/";
+let player="Anonymous", gender="", score=0, current=0, attempts=0, chosen=[];
+let currentCompliment="", currentInsult="";
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));$(id).classList.add("active");window.scrollTo(0,0)}
+function random(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function selectGender(g){
+  gender = g;
+
+  const male = document.getElementById("maleBtn");
+  const female = document.getElementById("femaleBtn");
+  const hint = document.getElementById("genderHint");
+
+  if(!male || !female || !hint) return;
+
+  male.classList.remove("selected");
+  female.classList.remove("selected");
+
+  if(g === "male"){
+    male.classList.add("selected");
+    hint.textContent = "MALE SELECTED — AB BHAI GAME KO JHEL.";
+  }else if(g === "female"){
+    female.classList.add("selected");
+    hint.textContent = " FEMALE SELECTED —  QUEEN MODE ACTIVATED.";
+  }
+}
+function start(){
+  const entered=($("username").value||"").trim();
+  if(!entered){
+    $("username").focus();
+    $("username").style.background="#ffb3b3";
+    $("username").placeholder="NAME DAAL PEHLE ";
+    return;
+  }
+  if(gender!=="male" && gender!=="female"){
+    $("genderHint").textContent=" MALE YA FEMALE SELECT KAR. BUTTONS DECORATION NAHI HAIN.";
+    document.querySelectorAll(".gender-btn").forEach(b=>b.classList.add("shake"));
+    setTimeout(()=>document.querySelectorAll(".gender-btn").forEach(b=>b.classList.remove("shake")),600);
+    return;
+  }
+  $("username").style.background="#fff";
+  player=entered.slice(0,20);
+  score=0;current=0;attempts=0;
+  const pill=challenges.find(c=>c.type==="pill");
+  const pool=shuffle(challenges.filter(c=>c.type!=="pill"));
+  chosen=shuffle([pill,...pool.slice(0,14)]);
+  $("playerName").textContent=player;
+  show("game");
+  renderChallenge();
+}
+function renderChallenge(){
+ const c=chosen[current];
+ $("levelLabel").textContent=`LEVEL ${c.level} — ${levels[c.level-1].name}`;
+ $("counter").textContent=`CHALLENGE ${current+1} / ${chosen.length}`;
+ $("progress").style.width=(current/chosen.length*100)+"%";
+ $("scoreNow").textContent=score;
+ $("trollFace").textContent=random(["","","","","","","",""]);
+ $("trollCount").textContent=`Random insults: ${Math.floor(Math.random()*900+100)} ready`;
+ currentInsult = gender==="male" ? random(maleInsults) : gender==="female" ? random(femaleInsults) : random(neutralInsults);
+ $("feedback").textContent=currentInsult;
+ $("warning").textContent=random([
+   "If the opponent can predict your next move, DON'T MOVE.",
+   "Never trust a button that says 'don't click'.",
+   "If it looks easy, the developer probably hates you.",
+   "Your next decision will be used against you.",
+   "The safest option is usually the one you immediately want to click.",
+   "If you see 67, pretend you didn't."
+ ]);
+ $("next").hidden=true; $("next").disabled=false; $("next").textContent="NEXT LEVEL ->"; attempts=0; window.challengeLocked=false;
+ const feedback=$("feedback");
+ if(feedback){ feedback.style.background=""; feedback.style.color=""; feedback.style.textShadow=""; }
+ const box=$("challenge"); box.innerHTML="";
+ if(c.type==="reaction") return reactionChallenge(box,c);
+  if(c.type==="pill") return pillChallenge(box,c);
+ const title=document.createElement("div");
+ title.className="challenge-title";
+ if(c.type==="pill"){
+   title.textContent="50% CHANCE OF PROVING YOU AIN'T GAY ";
+ }else{
+   title.textContent=random(["","","","","67?","BRO WHAT","NAH ","DON'T BLINK"])+" "+c.q;
+ }
+ box.appendChild(title);
+ if(c.type==="trap"){return trapChallenge(box,c)}
+ const q=document.createElement("div");q.className="question-box";
+ const grid=document.createElement("div");grid.className="options";
+ shuffle(c.a.map((x,i)=>({x,i}))).forEach(o=>{
+   const b=document.createElement("button");b.className="option";b.textContent=o.x;b.dataset.originalIndex=o.i;
+   b.onclick=()=>answer(c,o.i,b);grid.appendChild(b);
+ });
+ q.appendChild(grid);box.appendChild(q);
+}
+function showAnswerResult(correct, roast){
+  const fb=document.getElementById("feedback");
+  if(!fb) return;
+  fb.style.background="";
+  fb.style.color="";
+  fb.style.textShadow="";
+  fb.textContent=(correct ? "CORRECT. " : "WRONG. ")+roast;
+  fb.classList.remove("pop-good","pop-bad");
+  void fb.offsetWidth;
+  fb.classList.add(correct ? "pop-good" : "pop-bad");
+  unlock();
+}
+function answer(c,i,btn){
+ if(window.challengeLocked) return;
+ window.challengeLocked=true;
+
+ document.querySelectorAll("#challenge .option").forEach(b=>{
+   b.disabled=true;
+   b.style.opacity=".55";
+   b.style.cursor="not-allowed";
+ });
+
+ btn.style.opacity="1";
+ const correct=(i===c.correct);
+
+ if(correct){
+   score += 80 + Math.floor(Math.random()*121);
+   $("scoreNow").textContent=score;
+   btn.style.outline="5px solid #d7ff00";
+   showAnswerResult(true,random(roasts || maleInsults));
+ }else{
+   btn.style.outline="5px solid #ff1744";
+   document.querySelectorAll("#challenge .option").forEach(b=>{
+     if(Number(b.dataset.originalIndex)===c.correct){
+       b.style.outline="5px solid #d7ff00";
+       b.style.opacity="1";
+     }
+   });
+   showAnswerResult(false,random(roasts || maleInsults));
+ }
+}
+function trapChallenge(box,c){
+ const b=document.createElement("button");b.className="btn red trap";b.textContent=random(["DO NOT PRESS","ABSOLUTELY NOT","CLICK ME (DON'T)","FREE POINTS"]);
+ b.style.margin="35px auto";b.style.display="block";
+ b.onmouseenter=()=>{b.style.transform=`translate(${Math.random()*180-90}px,${Math.random()*100-50}px) rotate(${Math.random()*12-6}deg)`};
+ b.onclick=()=>{
+ if(window.challengeLocked)return;
+ window.challengeLocked=true;
+ score+=100;$("scoreNow").textContent=score;
+ showAnswerResult(false,random(roasts || maleInsults));
+ b.disabled=true;
+};
+ box.appendChild(b)
+}
+function pillChallenge(box,c){
+  const prompt=document.createElement("div");
+  prompt.className="prompt pill-hint";
+  prompt.textContent="99% CHANCE BLUE PILL IS WRONG. 1% CHANCE RED PILL IS CORRECT.";
+  box.appendChild(prompt);
+
+  const sub=document.createElement("div");
+  sub.className="cloud-note pill-sub";
+  sub.textContent="Choose carefully. The developer already knows what you will do.";
+  box.appendChild(sub);
+
+  const grid=document.createElement("div");
+  grid.className="options pill-options";
+
+  [
+    {text:"BLUE PILL",correct:false,cls:"blue-pill"},
+    {text:"RED PILL",correct:true,cls:"red-pill"}
+  ].forEach(p=>{
+    const b=document.createElement("button");
+    b.className="option pill-choice "+p.cls;
+    b.textContent=p.text;
+    b.onclick=()=>{
+      if(window.challengeLocked)return;
+      window.challengeLocked=true;
+
+      document.querySelectorAll(".pill-choice").forEach(o=>{
+        o.disabled=true;
+        o.style.pointerEvents="none";
+      });
+
+      score+=100;
+      $("scoreNow").textContent=score;
+
+      if(p.correct){
+        // RED PILL ONLY: show result and unlock the next level.
+        $("feedback").className="feedback pop-good";
+        $("feedback").style.background="#d7ff00";
+        $("feedback").style.color="#000";
+        $("feedback").style.textShadow="none";
+        $("feedback").textContent="CORRECT. " + random(roasts);
+        b.classList.add("pill-win");
+        unlock();
+      }else{
+        // BLUE PILL ONLY: wrong-pill popup. Do NOT unlock the next level.
+        $("feedback").className="feedback pop-bad";
+        $("feedback").style.background="#ff1744";
+        $("feedback").style.color="#fff";
+        $("feedback").style.textShadow="2px 2px 0 #000";
+        $("feedback").textContent="WRONG PILL. " + random(roasts);
+        b.classList.add("pill-loss");
+        setTimeout(showWrongPillPopup,300);
+      }
+    };
+    grid.appendChild(b);
+  });
+  box.appendChild(grid);
+}
+function showWrongPillPopup(){
+  const overlay=document.createElement("div");
+  overlay.id="socialPopup";
+  overlay.className="chaos-modal";
+  overlay.innerHTML=`<div class="rage modal-card wrong-pill-modal">
+    <div class="modal-kicker">YOU PICKED THE WRONG PILL</div>
+    <div class="modal-title">BLUE WAS A TRAP.</div>
+    <p class="modal-copy">You were given a 99% warning and still chose blue. Your score is saved.</p>
+    <button class="btn pink modal-action" onclick="continueToInstagram()">CONTINUE</button>
+  </div>`;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>overlay.classList.add("modal-show"));
+}
+
+function continueToInstagram(){
+  document.getElementById("socialPopup")?.remove();
+  window.location.href=INSTAGRAM_URL;
+}
+
+function reactionChallenge(box,c){
+ const title=document.createElement("div");title.className="challenge-title";title.textContent="⏱️ "+c.q;box.appendChild(title);
+ const b=document.createElement("button");b.className="btn cyan";b.textContent="WAITING FOR GREEN...";
+ b.style.display="block";b.style.margin="35px auto";box.appendChild(b);
+ let delay=1200+Math.random()*3500;
+ setTimeout(()=>{b.textContent="CLICK NOW";b.style.background="#b8ff00";b.onclick=()=>{
+ if(window.challengeLocked)return;
+ window.challengeLocked=true;
+ score+=150;$("scoreNow").textContent=score;
+ showAnswerResult(false,random(roasts || maleInsults));
+ b.disabled=true;
+}},delay);
+}
+function memoryChallenge(box,c){
+ const title=document.createElement("div");title.className="challenge-title";title.textContent=" REMEMBER THIS";box.appendChild(title);
+ const seq=shuffle(["","","","","",""]).slice(0,5);
+ const q=document.createElement("div");q.className="question-box";q.style.fontSize="46px";q.textContent=seq.join(" ");box.appendChild(q);
+ setTimeout(()=>{
+   q.style.fontSize="20px";q.textContent="What was the third object?";
+   const grid=document.createElement("div");grid.className="options";
+   shuffle(seq).forEach((x,i)=>{const b=document.createElement("button");b.className="option";b.textContent=x;b.onclick=()=>{
+   if(window.challengeLocked)return;
+   window.challengeLocked=true;
+   document.querySelectorAll(".option").forEach(o=>{o.disabled=true;o.style.opacity=".55";o.style.cursor="not-allowed"});
+   b.style.opacity="1";
+   if(x===seq[2]){
+     score+=70;$("scoreNow").textContent=score;
+     $("feedback").textContent=random(roasts);
+     b.style.outline="4px solid #b8ff00";
+   }else{
+     $("feedback").textContent=random(insults);
+     b.style.outline="4px solid #ff2b2b";
+   }
+   unlock()
+ };grid.appendChild(b)});box.appendChild(grid);
+ },1500)
+}
+function unlock(){
+  const nextBtn=document.getElementById("next");
+  if(!nextBtn) return;
+  nextBtn.hidden=false;
+  nextBtn.disabled=false;
+  nextBtn.textContent = current >= chosen.length-1 ? "FINISH THE CHAOS" : "NEXT LEVEL ->";
+  nextBtn.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function next(){current++;if(current>=chosen.length){finish();return}renderChallenge()}
+function finish(forcedEnd=false){
+ score+=Math.floor(Math.random()*400);
+ const scores=JSON.parse(localStorage.getItem("bivan_scores")||"[]");
+ scores.push({name:player,score,gender,time:Date.now()});
+ localStorage.setItem("bivan_scores",JSON.stringify(scores.slice(-100)));
+ const sorted=[{name:"BIVAN.EXE",score:9999999,dev:true},...scores].sort((a,b)=>b.score-a.score);
+ const rank=sorted.findIndex(x=>x.name===player&&x.score===score)+1;
+ $("finalScore").textContent=score;
+ $("finalRank").textContent="#"+rank;
+ $("roast").textContent = forcedEnd ? "GAME OVER  The pill got you. Score saved before the chaos ended." : $("roast").textContent;
+ $("roast").textContent=random([
+  "YOU SURVIVED. Somehow. Don't get outside — the real world is harder.",
+  "You have successfully wasted your time. The developer is proud.",
+  "Your score is questionable. Your confidence is not.",
+  "The game says you won. The developer says otherwise.",
+  "You beat the questions. You did not beat the trolling."
+ ]);
+ show("result")
+}
+function renderBoard(){
+ const scores=JSON.parse(localStorage.getItem("bivan_scores")||"[]");
+ const data=[{name:"BIVAN.EXE",score:9999999,dev:true,gender:"male"},...scores]
+   .sort((a,b)=>b.score-a.score).slice(0,10);
+ $("board").innerHTML=data.map((x,i)=>{
+   const pool=x.dev ? ["developer","built different","CEO of chaos"] :
+     (x.gender==="male" ? leaderboardComplimentsMale : leaderboardComplimentsFemale);
+   const compliment=random(pool);
+   return `<div class="row ${x.dev?"dev":""}">
+    <b>${["","",""][i]||i+1}</b>
+    <div><div class="name">${escapeHTML(x.name)} ${x.dev?"":""}</div>
+    <div style="font-family:Arial;font-size:11px;color:#aaa">${x.dev?"I'm the developer. I can do anything I want.":compliment}</div></div>
+    <b class="score-num">${Number(x.score).toLocaleString()}</b>
+   </div>`;
+ }).join("");
+}
+function openChallengePopup(){
+  const overlay=document.createElement("div");
+  overlay.id="challengePopup";
+  overlay.className="chaos-modal";
+  overlay.innerHTML=`<div class="rage modal-card challenge-modal">
+    <div class="modal-kicker">THE FINAL MOVE</div>
+    <div class="modal-title">CHALLENGE SOMEONE.</div>
+    <p class="modal-copy">Pick the message you want to send. Your friend is about to make the same mistake you just made.</p>
+    <div class="modal-share-grid">
+      <button class="share-pop boys-pop" onclick="copyChallenge('boy',true)">
+        <span>BOYS</span>
+        <small>Challenge a friend if you are truly a man.</small>
+        <b>COPY CHALLENGE</b>
+      </button>
+      <button class="share-pop girls-pop" onclick="copyChallenge('girl',true)">
+        <span>GIRLS</span>
+        <small>Challenge a friend if you don't wanna marry that lil bro who didn't challenge.</small>
+        <b>COPY CHALLENGE</b>
+      </button>
+    </div>
+    <div id="popupCopyMsg" class="cloud-note">DEPLOY THE GAME FIRST FOR A REAL PUBLIC LINK.</div>
+    <button class="btn yellow modal-close" onclick="closeChallengePopup()">CLOSE</button>
+  </div>`;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>overlay.classList.add("modal-show"));
+}
+
+function closeChallengePopup(){
+  document.getElementById("challengePopup")?.remove();
+}
+
+function copyChallenge(kind,fromPopup=false){
+  const text=kind==="boy"
+    ? "BIVAN.EXE challenged you — Challenge a friend if you are truly a man."
+    : "BIVAN.EXE challenged you — Challenge a friend if you don't wanna marry that lil bro who didn't challenge.";
+
+  const publicPage=location.protocol==="http:" || location.protocol==="https:";
+  const fullText=publicPage ? text+"\n"+location.href : text;
+
+  if(navigator.share && fromPopup){
+    navigator.share({title:"BIVAN.EXE",text, ...(publicPage?{url:location.href}:{})}).catch(()=>{});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(fullText);
+  }
+
+  const target=fromPopup ? $("popupCopyMsg") : $("copyMsg");
+  if(target){
+    target.textContent=publicPage ? "COPIED. NOW GO RUIN THEIR DAY." : "COPIED. DEPLOY THE GAME TO SHARE A REAL LINK.";
+    target.classList.remove("copy-pop");
+    void target.offsetWidth;
+    target.classList.add("copy-pop");
+  }
+}
+function continueDeveloper(){
+ score+=250;$("scoreNow").textContent=score;
+ current++;if(current>=chosen.length){finish();return}show("game");renderChallenge()
+}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+$("mute").onclick=()=>{ $("mute").textContent=$("mute").textContent===""?"":""; };
+
+/* BIVAN_SETTINGS_PATCH */
+(function(){
+  const overlay=document.getElementById("bivanSettingsOverlay");
+  const open=document.getElementById("bivanSettingsBtn");
+  const close=document.getElementById("bivanSettingsClose");
+  const mute=document.getElementById("bivanMuteBtn");
+  const label=document.getElementById("bivanVolumeLabel");
+
+  if(!overlay || !open || !close || !mute || !label) return;
+
+  let muted=false;
+
+  function setMuted(next){
+    muted=!!next;
+    document.querySelectorAll("audio,video").forEach(media=>{
+      media.muted=muted;
+    });
+    label.textContent=muted ? "SOUND: OFF" : "SOUND: ON";
+    mute.textContent=muted ? "UNMUTE" : "MUTE";
+  }
+
+  open.addEventListener("click",()=>{ overlay.style.display="flex"; });
+  close.addEventListener("click",()=>{ overlay.style.display="none"; });
+  overlay.addEventListener("click",e=>{
+    if(e.target===overlay) overlay.style.display="none";
+  });
+  mute.addEventListener("click",()=>setMuted(!muted));
+})();
+
+</script>
+</body>
+</html>
