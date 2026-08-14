@@ -1045,21 +1045,66 @@ async function finish(forcedEnd=false){
     $("finalRank").textContent="#?";
   }
 }
-function renderBoard(){
- const scores=JSON.parse(localStorage.getItem("bivan_scores")||"[]");
- const data=[{name:"BIVAN.EXE",score:99999999,dev:true,gender:"male"},...scores]
-   .sort((a,b)=>b.score-a.score).slice(0,10);
- $("board").innerHTML=data.map((x,i)=>{
-   const pool=x.dev ? ["developer","built different","CEO of chaos"] :
-     (x.gender==="male" ? leaderboardComplimentsMale : leaderboardComplimentsFemale);
-   const compliment=random(pool);
-   return `<div class="row ${x.dev?"dev":""}">
-    <b>${["","",""][i]||i+1}</b>
-    <div><div class="name">${escapeHTML(x.name)} ${x.dev?"":""}</div>
-    <div style="font-family:Arial;font-size:11px;color:#aaa">${x.dev?"I'm the developer. I can do anything I want.":compliment}</div></div>
-    <b class="score-num">${Number(x.score).toLocaleString()}</b>
-   </div>`;
- }).join("");
+async function renderBoard(){
+  const board=$("board");
+
+  board.innerHTML=`
+    <div class="meme-line">
+      LOADING GLOBAL LEADERBOARD...
+    </div>
+  `;
+
+  try{
+    const response=await fetch(
+      "https://bivan-exe-backend.onrender.com/api/leaderboard"
+    );
+
+    if(!response.ok){
+      throw new Error("Leaderboard request failed");
+    }
+
+    const result=await response.json();
+    const scores=result.players||[];
+
+    const data=[
+      {username:"BIVAN.EXE",score:99999999,dev:true,gender:"male"},
+      ...scores
+    ]
+    .sort((a,b)=>Number(b.score)-Number(a.score))
+    .slice(0,10);
+
+    board.innerHTML=data.map((x,i)=>{
+      const pool=x.dev
+        ? ["developer","built different","CEO of chaos"]
+        : (x.gender==="male"
+          ? leaderboardComplimentsMale
+          : leaderboardComplimentsFemale);
+
+      const compliment=random(pool);
+
+      return `<div class="row ${x.dev?"dev":""}">
+        <b>${i+1}</b>
+        <div>
+          <div class="name">${escapeHTML(x.username)}</div>
+          <div style="font-family:Arial;font-size:11px;color:#aaa">
+            ${x.dev
+              ? "I'm the developer. I can do anything I want."
+              : compliment}
+          </div>
+        </div>
+        <b class="score-num">${Number(x.score).toLocaleString()}</b>
+      </div>`;
+    }).join("");
+
+  }catch(error){
+    console.error("BIVAN.EXE leaderboard error:",error);
+
+    board.innerHTML=`
+      <div class="meme-line">
+        LEADERBOARD OFFLINE. TRY AGAIN.
+      </div>
+    `;
+  }
 }
 function openChallengePopup(){
   const overlay=document.createElement("div");
