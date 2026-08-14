@@ -875,36 +875,74 @@ $("mute").onclick=()=>{ $("mute").textContent=$("mute").textContent===""?"":""; 
   const close=document.getElementById("bivanSettingsClose");
   const mute=document.getElementById("bivanMuteBtn");
   const label=document.getElementById("bivanVolumeLabel");
+  if(!overlay||!open||!close||!mute||!label)return;
 
-  if(!overlay || !open || !close || !mute || !label) return;
-
-  let muted=false;
-
-  function setMuted(next){
-    muted=!!next;
-    document.querySelectorAll("audio,video").forEach(media=>{
-      media.muted=muted;
-    });
-    label.textContent=muted ? "SOUND: OFF" : "SOUND: ON";
-    mute.textContent=muted ? "UNMUTE" : "MUTE";
-  }
-
-  open.addEventListener("click",()=>{ overlay.style.display="flex"; });
-  close.addEventListener("click",()=>{ overlay.style.display="none"; });
-  overlay.addEventListener("click",e=>{
-    if(e.target===overlay) overlay.style.display="none";
+  open.addEventListener("click",()=>{overlay.style.display="flex";});
+  close.addEventListener("click",()=>{overlay.style.display="none";});
+  overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.style.display="none";});
+  mute.addEventListener("click",()=>{
+    if(window.bivanToggleMute) window.bivanToggleMute();
   });
-  mute.addEventListener("click",()=>setMuted(!muted));
 })();
 
 
-/* BIVAN_PROD_MUSIC */
+
+/* BIVAN_UNIFIED_AUDIO_CONTROLLER */
 (function(){
   const music=document.getElementById("bivanMusic");
-  if(!music)return;
-  music.volume=0.28;
-  window.bivanStartMusic=function(){music.play().catch(()=>{});};
+  const clickSfx=document.getElementById("bivanClickSfx");
+  const correctSfx=document.getElementById("bivanCorrectSfx");
+  const wrongSfx=document.getElementById("bivanWrongSfx");
+  const muteBtn=document.getElementById("bivanMuteBtn");
+  const label=document.getElementById("bivanVolumeLabel");
+  const feedback=document.getElementById("feedback");
+  if(!music||!clickSfx||!correctSfx||!wrongSfx)return;
 
+  let muted=false;
+  let started=false;
+
+  music.volume=0.28;
+  clickSfx.volume=0.22;
+  correctSfx.volume=0.30;
+  wrongSfx.volume=0.28;
+
+  function applyMute(){
+    [music,clickSfx,correctSfx,wrongSfx].forEach(a=>a.muted=muted);
+    if(label)label.textContent=muted?"SOUND: OFF":"SOUND: ON";
+    if(muteBtn)muteBtn.textContent=muted?"UNMUTE":"MUTE";
+
+    // If the music was muted and later unmuted, explicitly resume it.
+    if(!muted && started && music.paused){
+      music.play().catch(()=>{});
+    }
+  }
+
+  function play(a){
+    if(muted||!a)return;
+    try{
+      a.currentTime=0;
+      const p=a.play();
+      if(p&&p.catch)p.catch(()=>{});
+    }catch(e){}
+  }
+
+  window.bivanToggleMute=function(){
+    muted=!muted;
+    applyMute();
+  };
+
+  window.bivanStartMusic=function(){
+    started=true;
+    if(!muted){
+      music.play().catch(()=>{});
+    }
+  };
+
+  window.bivanPlayClick=function(){play(clickSfx);};
+  window.bivanPlayCorrect=function(){play(correctSfx);};
+  window.bivanPlayWrong=function(){play(wrongSfx);};
+
+  // Start music after the existing Start button is activated.
   const originalStart=window.start;
   if(typeof originalStart==="function"){
     window.start=function(){
@@ -913,54 +951,31 @@ $("mute").onclick=()=>{ $("mute").textContent=$("mute").textContent===""?"":""; 
       return result;
     };
   }
-})();
 
+  // Every normal button gets a click SFX. Settings itself is excluded.
+  document.addEventListener("click",function(e){
+    const b=e.target.closest("button");
+    if(!b)return;
+    if(b.id==="bivanSettingsBtn"||b.id==="bivanMuteBtn")return;
+    play(clickSfx);
+  },true);
 
-/* BIVAN_SFX_PATCH */
-(function(){
-  const clickSfx=document.getElementById("bivanClickSfx");
-  const correctSfx=document.getElementById("bivanCorrectSfx");
-  const wrongSfx=document.getElementById("bivanWrongSfx");
-  if(!clickSfx || !correctSfx || !wrongSfx) return;
-
-  let sfxMuted=false;
-
-  function playSfx(audio){
-    if(sfxMuted) return;
-    try{
-      audio.currentTime=0;
-      audio.play().catch(()=>{});
-    }catch(e){}
+  // Observe the existing feedback element. This is more reliable than
+  // wrapping showAnswerResult and does not alter the game's answer logic.
+  if(feedback){
+    let last="";
+    const observer=new MutationObserver(()=>{
+      const text=(feedback.textContent||"").trim();
+      if(!text||text===last)return;
+      last=text;
+      if(/^CORRECT\./i.test(text))play(correctSfx);
+      else if(/^WRONG\./i.test(text))play(wrongSfx);
+    });
+    observer.observe(feedback,{childList:true,subtree:true,characterData:true});
   }
 
-  window.bivanPlayClick=function(){playSfx(clickSfx);};
-  window.bivanPlayCorrect=function(){playSfx(correctSfx);};
-  window.bivanPlayWrong=function(){playSfx(wrongSfx);};
-  window.bivanSetSfxMuted=function(v){sfxMuted=!!v;};
-
-  // Button-click SFX for interactive controls.
-  document.addEventListener("click", function(e){
-    const el=e.target.closest("button");
-    if(el && el.id!=="bivanMuteBtn" && el.id!=="bivanSettingsBtn"){
-      playSfx(clickSfx);
-    }
-  }, true);
+  applyMute();
 })();
-
-
-/* BIVAN_RESULT_SFX_HOOK */
-(function(){
-  const oldShow=window.showAnswerResult;
-  if(typeof oldShow!=="function") return;
-  window.showAnswerResult=function(correct, roast){
-    if(correct && window.bivanPlayCorrect) window.bivanPlayCorrect();
-    if(!correct && window.bivanPlayWrong) window.bivanPlayWrong();
-    return oldShow.apply(this, arguments);
-  };
-})();
-
-
-
 
 </script>
 </body>
